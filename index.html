@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aventoura - Choose Your Adventure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* ===== DESTINATION PICKER ===== */
+      #destination-picker {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #05090f;
+        overflow-y: auto;
+        overflow-x: hidden;
+        font-family: 'Outfit', sans-serif;
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+
+      #destination-picker.fade-out {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(1.04);
+      }
+
+      /* Animated starfield background */
+      .picker-bg {
+        position: fixed;
+        inset: 0;
+        background: 
+          radial-gradient(ellipse at 20% 40%, rgba(100, 60, 20, 0.25) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 60%, rgba(20, 60, 100, 0.3) 0%, transparent 55%),
+          #05090f;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .picker-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: 
+          radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+          radial-gradient(1px 1px at 35% 65%, rgba(255,255,255,0.4) 0%, transparent 100%),
+          radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+          radial-gradient(1px 1px at 75% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+          radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.5) 0%, transparent 100%),
+          radial-gradient(1px 1px at 8% 85%, rgba(255,255,255,0.4) 0%, transparent 100%),
+          radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+          radial-gradient(2px 2px at 45% 35%, rgba(255,255,255,0.2) 0%, transparent 100%),
+          radial-gradient(1px 1px at 28% 50%, rgba(255,255,255,0.5) 0%, transparent 100%);
+        animation: twinkle 4s ease-in-out infinite alternate;
+      }
+
+      @keyframes twinkle {
+        0% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+
+      /* Header */
+      .picker-header {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        margin-bottom: 3.5rem;
+        animation: fadeSlideDown 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .picker-logo {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1rem;
+        font-weight: 400;
+        letter-spacing: 0.5em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 1.2rem;
+      }
+
+      .picker-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(2.8rem, 6vw, 5rem);
+        font-weight: 300;
+        color: #fff;
+        line-height: 1.1;
+        margin-bottom: 0.8rem;
+        letter-spacing: -0.01em;
+      }
+
+      .picker-title em {
+        font-style: italic;
+        color: rgba(255,255,255,0.6);
+      }
+
+      .picker-subtitle {
+        font-size: 0.9rem;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.35);
+      }
+
+      /* Cards row */
+      .picker-cards {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 1.5rem;
+        animation: fadeSlideUp 1s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .dest-card {
+        position: relative;
+        width: 320px;
+        height: 440px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+        border: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+      }
+
+      .dest-card:hover {
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      }
+
+      .dest-card:hover .card-image {
+        transform: scale(1.08);
+      }
+
+      .dest-card:hover .card-overlay {
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+      }
+
+      .dest-card:hover .card-explore {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .dest-card:hover .card-arrow {
+        transform: translateX(6px);
+      }
+
+      /* Japan card */
+      .dest-card.japan .card-image {
+        background: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=700&q=80') center/cover no-repeat;
+      }
+
+      /* Thailand card - real image like Japan */
+      .dest-card.thailand .card-image {
+        background: url('https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=700&q=80') center/cover no-repeat;
+      }
+
+      .card-image {
+        position: absolute;
+        inset: 0;
+        transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+        transition: background 0.5s ease;
+      }
+
+      .card-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2rem;
+        color: white;
+      }
+
+      .card-tag {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        padding: 0.3rem 0.8rem;
+        border-radius: 30px;
+        margin-bottom: 0.8rem;
+      }
+
+      .japan .card-tag {
+        background: rgba(255, 80, 80, 0.25);
+        border: 1px solid rgba(255, 80, 80, 0.4);
+        color: #ffaaaa;
+      }
+
+      .thailand .card-tag {
+        background: rgba(255, 180, 0, 0.2);
+        border: 1px solid rgba(255, 180, 0, 0.4);
+        color: #ffd580;
+      }
+
+      /* Thailand card - same behavior as Japan */
+      .dest-card.thailand {
+        cursor: pointer;
+        opacity: 1;
+      }
+
+      .card-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2.2rem;
+        font-weight: 300;
+        line-height: 1.1;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.01em;
+      }
+
+      .card-desc {
+        font-size: 0.8rem;
+        font-weight: 300;
+        color: rgba(255,255,255,0.6);
+        letter-spacing: 0.05em;
+        margin-bottom: 1.2rem;
+        line-height: 1.5;
+      }
+
+      .card-explore {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.9);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      .card-arrow {
+        transition: transform 0.3s ease;
+        font-size: 1rem;
+      }
+
+      /* Scroll hint */
+      .picker-hint {
+        position: relative;
+        z-index: 2;
+        margin-top: 2.5rem;
+        text-align: center;
+        animation: fadeSlideUp 1s 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .picker-hint p {
+        font-size: 0.75rem;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.2);
+      }
+
+      .picker-inner {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Animations */
+      @keyframes fadeSlideDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ===== JAPAN SITE WRAPPER ===== */
+      #japan-site {
+        display: none;
+        animation: siteReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      #japan-site.visible {
+        display: block;
+      }
+
+      @keyframes siteReveal {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Thailand site - same pattern as Japan */
+      #thailand-site {
+        display: none;
+        animation: siteReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      #thailand-site.visible {
+        display: block;
+      }
+
+      /* Back button on Japan site */
+      .site-back-btn {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1.5rem;
+        z-index: 999;
+        background: rgba(5, 9, 15, 0.8);
+        color: rgba(255,255,255,0.7);
+        border: 1px solid rgba(255,255,255,0.15);
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 400;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        backdrop-filter: blur(8px);
+        display: none;
+      }
+
+      .site-back-btn.visible {
+        display: block;
+      }
+
+      .site-back-btn:hover {
+        background: rgba(5, 9, 15, 0.95);
+        color: #fff;
+        border-color: rgba(255,255,255,0.3);
+      }
+
+      @media (max-width: 720px) {
+        .picker-cards {
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .dest-card {
+          width: 290px;
+          height: 360px;
+        }
+
+        .picker-title {
+          font-size: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ===== DESTINATION PICKER ===== -->
+    <div id="destination-picker">
+      <div class="picker-bg"></div>
+
+      <div class="picker-inner">
+      <header class="picker-header">
+        <div class="picker-logo">Aventoura</div>
+        <h1 class="picker-title">Where will you<br><em>wander next?</em></h1>
+        <p class="picker-subtitle">Select your destination</p>
+      </header>
+
+      <div class="picker-cards">
+        <!-- Japan -->
+        <div class="dest-card japan" onclick="selectDestination('japan')">
+          <div class="card-image"></div>
+          <div class="card-overlay"></div>
+          <div class="card-content">
+            <div class="card-tag">Available · May 2026</div>
+            <div class="card-name">Japan</div>
+            <div class="card-desc">Alpine Route · Snow Corridors<br>Temples & Wisteria Gardens</div>
+            <div class="card-explore">Explore Tour <span class="card-arrow">→</span></div>
+          </div>
+        </div>
+
+        <!-- Thailand -->
+        <div class="dest-card thailand" onclick="selectDestination('thailand')">
+          <div class="card-image"></div>
+          <div class="card-overlay"></div>
+          <div class="card-content">
+            <div class="card-tag">Available · 2026</div>
+            <div class="card-name">Thailand</div>
+            <div class="card-desc">Golden Temples · Tropical Beaches<br>Floating Markets & Street Food</div>
+            <div class="card-explore">Explore Tour <span class="card-arrow">→</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="picker-hint">
+        <p>More destinations being curated</p>
+      </div>
+      </div> <!-- /.picker-inner -->
+    </div>
+
+    <!-- Back button (shown when viewing Japan site) -->
+    <button class="site-back-btn" id="back-btn" onclick="goBack()">← Change Destination</button>
+
+    <!-- ===== JAPAN SITE ===== -->
+    <div id="japan-site">
+      <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+          <div class="navbar-container">
+            <div class="navbar-logo">
+              <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'" />
+              <span class="logo-text">Aventoura</span>
+            </div>
+            <ul class="nav-menu">
+              <li><a href="#highlights" class="nav-link">Highlights</a></li>
+              <li><a href="#itinerary" class="nav-link">Itinerary</a></li>
+              <li><a href="https://www.instagram.com/aventoura_tour?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="nav-btn" style="text-decoration: none;">Book Now</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="hero">
+          <div class="hero-bg"></div>
+          <div class="hero-content">
+            <div class="hero-badge">Limited Availability • May 2026</div>
+            <h1>Japan Alpine Route</h1>
+            <p class="hero-subtitle">Experience the Majestic Tateyama Alpine Route with UNESCO Heritage Sites</p>
+            <div class="hero-cta">
+              <a href="https://forms.gle/BT7f2YxepQjhyLC76" target="_blank" class="btn-hero-primary" style="text-decoration: none;">Reserve Your Spot</a>
+              <a href="#itinerary" class="btn-hero-secondary" style="text-decoration: none;">Explore Itinerary</a>
+            </div>
+          </div>
+          <div class="hero-overlay"></div>
+        </header>
+
+        <!-- Quick Stats -->
+        <section class="quick-stats">
+          <div class="stat-item">
+            <div class="stat-number">7</div>
+            <div class="stat-label">Days</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">🏆</div>
+            <div class="stat-label">Best Value</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">2316m</div>
+            <div class="stat-label">Max Elevation</div>
+          </div>
+        </section>
+
+        <!-- Info Cards -->
+        <section class="info-section" id="details">
+          <div class="info-container">
+            <div class="info-grid-full">
+              <div class="info-card">
+                <div class="info-header">📍 Location</div>
+                <p>Japan (Osaka, Kyoto, Alpine Region, Tokyo)</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">📅 Departure</div>
+                <p>21 May 2026</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">✈️ Flight</div>
+                <p>International flight included</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">🏨 Accommodation</div>
+                <p>6 nights premium hotels</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">🍽️ Meals</div>
+                <p>Breakfast, Lunch & Dinner included</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">👥 Group Size</div>
+                <p>Min 2 | Max 25 people</p>
+              </div>
+            </div>
+            <div class="booking-box">
+              <h3>From $2,499</h3>
+              <li><a href="https://forms.gle/BT7f2YxepQjhyLC76" target="_blank" class="btn-primary" style="text-decoration: none;">Book Now</a></li>
+              <p class="booking-note">Limited slots available for May 2026</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Highlights Section -->
+        <section class="highlights-section" id="highlights">
+          <div class="section-header">
+            <h2>Tour Highlights</h2>
+            <p>Unforgettable Experiences Await</p>
+          </div>
+          <div class="highlights-grid">
+            <div class="highlight-card">
+              <div class="highlight-badge">UNESCO Site</div>
+              <h3>Shirakawa Go Village</h3>
+              <p>Explore the UNESCO World Heritage gassho-zukuri farmhouses with their iconic steep triangular roofs</p>
+              <div class="highlight-stats">
+                <span>📍 Gifu Prefecture</span>
+                <span>🏘️ 110 houses</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Engineering Marvel</div>
+              <h3>Kurobe Dam</h3>
+              <p>Japan's highest arch dam with panoramic views and stunning mountain backdrop</p>
+              <div class="highlight-stats">
+                <span>⛰️ 186m high</span>
+                <span>📸 Perfect photo ops</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Natural Wonder</div>
+              <h3>Snow Corridor</h3>
+              <p>Drive through towering walls of snow reaching up to 20 meters high in the Alpine Route</p>
+              <div class="highlight-stats">
+                <span>❄️ 2,316m elevation</span>
+                <span>🛣️ 500m passage</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Festival Event</div>
+              <h3>Shibazakura Festival</h3>
+              <p>800,000 blooming phlox flowers creating a breathtaking carpet of colors</p>
+              <div class="highlight-stats">
+                <span>🌸 8 varieties</span>
+                <span>🗻 Mount Fuji backdrop</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Botanical Wonder</div>
+              <h3>Ashikaga Flower Park</h3>
+              <p>Japan's most beautiful wisteria garden with ancient blooming vines</p>
+              <div class="highlight-stats">
+                <span>🌺 Multiple gardens</span>
+                <span>📸 Instagram favorite</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Historic Temple</div>
+              <h3>Kiyomizu Temple</h3>
+              <p>1200-year-old UNESCO Buddhist temple with panoramic Kyoto views</p>
+              <div class="highlight-stats">
+                <span>🏯 1,200 years old</span>
+                <span>👁️ Mountain views</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Itinerary Section -->
+        <section class="itinerary-section" id="itinerary">
+          <div class="section-header">
+            <h2>7-Day Detailed Itinerary</h2>
+            <p>Day-by-Day Breakdown of Your Adventure</p>
+          </div>
+
+          <div class="itinerary-timeline">
+            <div class="itinerary-day">
+              <div class="day-marker">01</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Jakarta - Kansai</h3>
+                  <span class="day-type">DEPARTURE</span>
+                </div>
+                <div class="day-content">
+                  <p>On the designated day you are expected to gather at the Soekarno Hatta International Airport to travel together to Kansai, Osaka. Overnight on the plane.</p>
+                  <div class="day-meals">
+                    <span>✈️ Overnight flight</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">02</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Kansai - Osaka - Kyoto - Gifu</h3>
+                  <span class="day-type">EXPLORATION</span>
+                </div>
+                <div class="day-content">
+                  <p>You are expected to arrive at Itami Airport in the morning, then head to the city of Osaka and photo stop at Osaka Castle. You will enjoy the experience of riding the super fast bullet train Shinkansen (short ride) to the city of Kyoto. In this culturally rich and charming city, you will visit Kiyomizu Temple as a Buddhist temple located on a hill with beautiful views. In the afternoon towards Gifu, upon arrival you will check in at the hotel and rest.</p>
+                  <div class="day-accommodation">
+                    <strong>HOTEL: GIFU WASHINGTON / or equivalent</strong>
+                  </div>
+                  <div class="day-meals">
+                    <span>🍽️ Lunch</span>
+                    <span>🍽️ Dinner</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">03</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Gifu - Takayama - Toyama</h3>
+                  <span class="day-type">HERITAGE SITES</span>
+                </div>
+                <div class="day-content">
+                  <p>After enjoying breakfast at the hotel, you will head to Takayama. Upon arrival, you will visit Takayama Old Town to walk Sannomachi Street with a quiet town atmosphere and many shops selling souvenirs and Sake Shop. Next you will visit Shirakawa Go, an area of traditional residential houses where the roofs are made of straw with a triangular shape like an open standing book, also designated as one of UNESCO World Heritage cultural areas. Stay overnight in Toyama.</p>
+                  <div class="day-accommodation">
+                    <strong>HOTEL: TOYAMA COMFORT / or equivalent</strong>
+                  </div>
+                  <div class="day-meals">
+                    <span>🍽️ Breakfast</span>
+                    <span>🍽️ Lunch</span>
+                    <span>🍽️ Dinner</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">04</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Toyama - Alpine Route - Matsumoto</h3>
+                  <span class="day-type">ALPINE ADVENTURE</span>
+                </div>
+                <div class="day-content">
+                  <p>Your tour today is heading to Tateyama Tunnel by passing underground / underground and enjoying the stunning scenery at an altitude of 2,316m above sea level and you can see the beauty of Kurobe which includes Kurobe Dam, where you can take photos with amazing views with a background of Kurobe Lake and Tateyama Mountains, as well as the Monument for The Martyr to Duty to commemorate 171 workers who died in the construction of the Kurobe Dam. You will also cross the SNOW CORRIDOR with stunning views along the road, weather permitting. Don't forget you will be invited to ride an electric bus crossing Kanden Tunnel. Stay overnight in the Matsumoto area.</p>
+                  <div class="day-accommodation">
+                    <strong>HOTEL: MATSUMOTO RICHMOND / or equivalent</strong><br>
+                    <em>NOTE: IF ALPINE ROUTE IS NOT AVAILABLE, IT WILL BE REPLACED WITH SHINHOTAKA ROPEWAY</em>
+                  </div>
+                  <div class="day-meals">
+                    <span>🍽️ Breakfast</span>
+                    <span>🍽️ Lunch</span>
+                    <span>🍽️ Dinner</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">05</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Matsumoto - Kawaguchi</h3>
+                  <span class="day-type">FLOWERS & SHOPPING</span>
+                </div>
+                <div class="day-content">
+                  <p>Your journey today to see the Shibazakura Festival, which is a flower festival where about 800,000 types of flowers bloom with bright colors accompanied by Mount Fuji as a background and there is a bazaar selling various Japanese specialties. Free time for you to shop at Gotemba Premium Outlet which sells various world-class items such as Boss, Armani, Nike, Adidas, Lacoste, and others at affordable prices. Stay overnight in Kawaguchi.<br><br><em>Note: Rooms in the Kawaguchi area can be Western style / traditional Tatami style. The blooming period of flowers can be different each year, depending on natural and weather conditions.</em></p>
+                  <div class="day-accommodation">
+                    <strong>HOTEL: KAWAGUCHI FUJI JIRAGON / or equivalent</strong>
+                  </div>
+                  <div class="day-meals">
+                    <span>🍽️ Breakfast</span>
+                    <span>🍽️ Dinner</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">06</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Kawaguchi - Tokyo</h3>
+                  <span class="day-type">GARDENS & CITY</span>
+                </div>
+                <div class="day-content">
+                  <p>Your tour today visits Ashikaga Flower Park to witness beautiful flower displays. Then head to the capital Tokyo, you will walk through Shinjuku as one of the busiest stations and busiest corners at night. After that you head to the hotel to check in and rest. Stay overnight in Tokyo.<br><br><em>The blooming period of flowers can be different each year, depending on natural and weather conditions.</em></p>
+                  <div class="day-accommodation">
+                    <strong>HOTEL: TOKYO TMARK CITY OMORI / or equivalent</strong>
+                  </div>
+                  <div class="day-meals">
+                    <span>🍽️ Breakfast</span>
+                    <span>🍽️ Lunch</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">07</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Tokyo - Narita - Jakarta</h3>
+                  <span class="day-type">RETURN HOME</span>
+                </div>
+                <div class="day-content">
+                  <p>Today you fly back to Jakarta. Thus your journey with PANORAMA JTB has ended. Thank you for your participation and togetherness, see you in our other outings.<br><br><em>NOTE: CHILD NO BED ONLY FOR CHILDREN AGE 5 YEARS AND UNDER</em></p>
+                  <div class="day-meals">
+                    <span>🍽️ Breakfast</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Inclusions & Exclusions -->
+        <section class="inclusions-section">
+          <div class="section-header">
+            <h2>What's Included & Excluded</h2>
+          </div>
+          <div class="inclusions-grid">
+            <div class="inclusion-card included">
+              <h3>Included in Tour Price</h3>
+              <ul>
+                <li>Round-trip international flights (Jakarta-Osaka-Jakarta)</li>
+                <li>6 nights accommodation in 3-4 star hotels</li>
+                <li>All meals (breakfast, lunch, dinner)</li>
+                <li>All entrance fees and attractions</li>
+                <li>Tateyama Alpine Route (full experience)</li>
+                <li>Shinkansen bullet train tickets</li>
+                <li>Professional English-speaking tour guide</li>
+                <li>All ground transportation</li>
+                <li>Travel insurance</li>
+              </ul>
+            </div>
+            <div class="inclusion-card excluded">
+              <h3>Not Included</h3>
+              <ul>
+                <li>Personal travel insurance (optional)</li>
+                <li>Visa fees (if applicable)</li>
+                <li>Personal expenses & shopping</li>
+                <li>Tips & gratuities</li>
+                <li>Activities not mentioned in itinerary</li>
+                <li>Alcoholic beverages (except included)</li>
+                <li>Airport transfers outside package</li>
+                <li>Travel to/from Jakarta airport</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="final-cta">
+          <h2>Ready to Experience Japan's Alpine Beauty?</h2>
+          <p>Limited Availability - Only 25 Spots Available for May 2026</p>
+          <div class="cta-buttons">
+            <a href="https://forms.gle/BT7f2YxepQjhyLC76" target="_blank" class="btn-cta-primary" style="text-decoration: none;">Reserve Your Spot Now</a>
+            <a href="https://www.instagram.com/aventoura_tour?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="btn-cta-secondary" style="text-decoration: none;">Contact Us</a>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <div class="footer-content">
+            <div class="footer-section">
+              <h4>Aventoura</h4>
+              <p>Your trusted adventure travel partner</p>
+            </div>
+            <div class="footer-section">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="#highlights">Highlights</a></li>
+                <li><a href="#itinerary">Itinerary</a></li>
+              </ul>
+            </div>
+            <div class="footer-section">
+              <h4>Contact</h4>
+              <p>Instagram : aventoura_tour</p>
+              <p>Phone: +62 813-1631-9306</p>
+              <p>Office : Jakarta, Indonesia</p>
+            </div>
+            <div class="footer-section">
+              <h4>Follow Us</h4>
+              <div class="social-links">
+                <a href="https://www.instagram.com/aventoura_tour?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==">Instagram</a>
+              </div>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 Aventoura. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- ===== THAILAND SITE ===== -->
+    <div id="thailand-site">
+      <div id="app-thailand">
+        <nav class="navbar">
+          <div class="navbar-container">
+            <div class="navbar-logo">
+              <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'" />
+              <span class="logo-text">Aventoura</span>
+            </div>
+            <ul class="nav-menu">
+              <li><a href="#highlights-th" class="nav-link">Highlights</a></li>
+              <li><a href="#itinerary-th" class="nav-link">Itinerary</a></li>
+              <li><a href="https://www.instagram.com/aventoura_tour?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="nav-btn" style="text-decoration: none;">Book Now</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <header class="hero" style="background-image: url('https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1400&q=80');">
+          <div class="hero-bg"></div>
+          <div class="hero-content">
+            <div class="hero-badge">Limited Availability • 2026</div>
+            <h1>Thailand Beautiful</h1>
+            <p class="hero-subtitle">Bangkok & Pattaya — Temples, Floating Markets, River Cruises & More</p>
+            <div class="hero-cta">
+              <a href="https://forms.gle/BT7f2YxepQjhyLC76" target="_blank" class="btn-hero-primary" style="text-decoration: none;">Reserve Your Spot</a>
+              <a href="#itinerary-th" class="btn-hero-secondary" style="text-decoration: none;">Explore Itinerary</a>
+            </div>
+          </div>
+          <div class="hero-overlay"></div>
+        </header>
+
+        <section class="quick-stats">
+          <div class="stat-item">
+            <div class="stat-number">5</div>
+            <div class="stat-label">Days</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">🏆</div>
+            <div class="stat-label">Best Value</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">35°C</div>
+            <div class="stat-label">Avg. Temp</div>
+          </div>
+        </section>
+
+        <section class="info-section" id="details-th">
+          <div class="info-container">
+            <div class="info-grid-full">
+              <div class="info-card">
+                <div class="info-header">📍 Location</div>
+                <p>Thailand (Bangkok & Pattaya)</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">📅 Departure</div>
+                <p>TBA 2026</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">✈️ Flight</div>
+                <p>International flight included</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">🏨 Accommodation</div>
+                <p>4 nights premium hotels</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">🍽️ Meals</div>
+                <p>Breakfast, Lunch & Dinner included</p>
+              </div>
+              <div class="info-card">
+                <div class="info-header">👥 Group Size</div>
+                <p>Min 2 | Max 25 people</p>
+              </div>
+            </div>
+            <div class="booking-box">
+              <h3>From $1,299</h3>
+              <li><a href="https://www.instagram.com/aventoura_tour" target="_blank" class="btn-primary" style="text-decoration: none;">Book Now</a></li>
+              <p class="booking-note">Limited slots available for 2026</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="highlights-section" id="highlights-th">
+          <div class="section-header">
+            <h2>Tour Highlights</h2>
+            <p>Unforgettable Experiences Await</p>
+          </div>
+          <div class="highlights-grid">
+            <div class="highlight-card">
+              <div class="highlight-badge">Tropical Garden</div>
+              <h3>Nongnooch Village</h3>
+              <p>A sprawling tropical garden featuring stunning Thai architecture, cultural performances, and a captivating elephant show</p>
+              <div class="highlight-stats">
+                <span>📍 Pattaya</span>
+                <span>🐘 Elephant show</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Local Market</div>
+              <h3>Pattaya Floating Market</h3>
+              <p>Four-regions floating market on teak-wood structures over water, selling authentic crafts, silk, and street food from all over Thailand</p>
+              <div class="highlight-stats">
+                <span>🛶 4 regions of Thailand</span>
+                <span>🛍️ Local souvenirs</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Sacred Temple</div>
+              <h3>Wat Arun</h3>
+              <p>The iconic Temple of Dawn on the banks of the Chao Phraya River, decorated with colorful porcelain and one of Bangkok's most recognizable landmarks</p>
+              <div class="highlight-stats">
+                <span>📍 Bangkok</span>
+                <span>⛵ River access</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">River Cruise</div>
+              <h3>Chao Phraya River</h3>
+              <p>Cruise Thailand's main river stretching 372 km, passing glittering temples and Bangkok's iconic skyline on both banks</p>
+              <div class="highlight-stats">
+                <span>🚢 372 km river</span>
+                <span>🌆 Bangkok skyline</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Night Market</div>
+              <h3>Asiatique Riverfront</h3>
+              <p>Bangkok's largest night market along the river — a lively blend of shops, restaurants, Ferris wheel, and vibrant evening entertainment</p>
+              <div class="highlight-stats">
+                <span>🌙 Evening market</span>
+                <span>🎡 Riverfront views</span>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-badge">Dinner Experience</div>
+              <h3>Chaophraya Princess Cruise</h3>
+              <p>A special dinner cruise along the Chao Phraya River with Thai cuisine, live entertainment, and illuminated views of Bangkok's temples at night</p>
+              <div class="highlight-stats">
+                <span>🍽️ Special dinner</span>
+                <span>✨ Night river views</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="itinerary-section" id="itinerary-th">
+          <div class="section-header">
+            <h2>5-Day Detailed Itinerary</h2>
+            <p>Day-by-Day Breakdown of Your Adventure</p>
+          </div>
+          <div class="itinerary-timeline">
+
+            <div class="itinerary-day">
+              <div class="day-marker">01</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Jakarta - Bangkok - Pattaya</h3>
+                  <span class="day-type">DEPARTURE</span>
+                </div>
+                <div class="day-content">
+                  <p>On the designated day, gather at Soekarno Hatta International Airport for your flight to Bangkok. Upon arrival at Suvarnabhumi International Airport, complete immigration and baggage claim, then head directly to Pattaya. Upon arrival in Pattaya, visit Errawade Herbal Store and the Pattaya Floating Market — a four-region cultural market where you can buy Thai souvenirs and local specialties. In the afternoon, head to Terminal 21 Vintage Pattaya Mall for shopping and dinner. Transfer to hotel for rest.</p>
+                  <div class="day-accommodation"><strong>HOTEL: KASTEL PATTAYA / or equivalent</strong></div>
+                  <div class="day-meals"><span>🍽️ Dinner</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">02</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Pattaya Tour</h3>
+                  <span class="day-type">EXPLORATION</span>
+                </div>
+                <div class="day-content">
+                  <p>After breakfast at the hotel, head to Pattaya Beach for a morning stroll. Visit Nongnooch Village — a vast tropical garden with stunning Thai-style architecture and the chance to witness an impressive elephant and cultural show. After lunch, visit the Gem Gallery (including a Dark Train ride) and Thai Dried Food Store for local snacks and treats. In the afternoon, head to King Power Duty Free Mall for branded shopping. In the evening after dinner, explore Jodd Fair Night Market — one of Pattaya's most vibrant and popular night markets. Return to hotel.</p>
+                  <div class="day-accommodation"><strong>HOTEL: PANNARAI PRATUNAM HOTEL / or equivalent</strong></div>
+                  <div class="day-meals"><span>🍽️ Breakfast</span><span>🍽️ Lunch</span><span>🍽️ Dinner</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">03</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Pattaya - Bangkok</h3>
+                  <span class="day-type">RIVER & TEMPLES</span>
+                </div>
+                <div class="day-content">
+                  <p>After breakfast, begin a full-day tour of Bangkok. Start by cruising along the Chao Phraya River — Thailand's main river stretching approximately 372 km — and stop at the magnificent Wat Arun Temple (Temple of Dawn), renowned for its beautiful riverside architecture. After lunch, visit the Bangkok Honey Bee Store and continue to Asiatique River Night Market, one of Bangkok's largest and most vibrant night markets along the riverfront. Enjoy dinner before returning to the hotel.</p>
+                  <div class="day-accommodation"><strong>HOTEL: PANNARAI PRATUNAM HOTEL / or equivalent</strong></div>
+                  <div class="day-meals"><span>🍽️ Breakfast</span><span>🍽️ Lunch</span><span>🍽️ Dinner</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">04</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Bangkok - Shopping & Dinner Cruise</h3>
+                  <span class="day-type">SHOPPING & ENTERTAINMENT</span>
+                </div>
+                <div class="day-content">
+                  <p>After breakfast, enjoy free time for shopping at Platinum Fashion Mall and the Pratunam Shopping Area — a paradise for fashion and local goods at affordable prices. In the evening, visit The Icon Mall of Siam and enjoy the spectacular Water Fountain Show starting at 18:00. The highlight of the evening is a Special Dinner Cruise aboard the Chaophraya Princess, sailing the Chao Phraya River with stunning illuminated views of Bangkok's temples and skyline while enjoying Thai cuisine and live entertainment. Return to hotel.</p>
+                  <div class="day-accommodation"><strong>HOTEL: PANNARAI PRATUNAM HOTEL / or equivalent</strong></div>
+                  <div class="day-meals"><span>🍽️ Breakfast</span><span>🍽️ Special Dinner Cruise</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="itinerary-day">
+              <div class="day-marker">05</div>
+              <div class="day-main">
+                <div class="day-header">
+                  <h3>Bangkok - Jakarta</h3>
+                  <span class="day-type">RETURN HOME</span>
+                </div>
+                <div class="day-content">
+                  <p>After breakfast at the hotel, you will be transferred to MBK Mall for a final shopping session before being taken to the airport for your flight back to Jakarta. In the afternoon, you will arrive at Soekarno Hatta International Airport. Thus your journey with Aventoura has come to a wonderful end — thank you for joining us, and see you on our next adventure!<br><br><em>NOTE: CHILD NO BED ONLY FOR CHILDREN AGE 5 YEARS AND UNDER</em></p>
+                  <div class="day-meals"><span>🍽️ Breakfast</span></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="inclusions-section">
+          <div class="section-header"><h2>What's Included & Excluded</h2></div>
+          <div class="inclusions-grid">
+            <div class="inclusion-card included">
+              <h3>Included in Tour Price</h3>
+              <ul>
+                <li>Round-trip international flights (Jakarta–Bangkok)</li>
+                <li>4 nights accommodation in 3-4 star hotels</li>
+                <li>All meals as per itinerary</li>
+                <li>All entrance fees and listed attractions</li>
+                <li>Nongnooch Village & elephant show</li>
+                <li>Special Dinner Cruise (Chaophraya Princess)</li>
+                <li>Professional English-speaking tour guide</li>
+                <li>All ground transportation</li>
+                <li>Travel insurance</li>
+              </ul>
+            </div>
+            <div class="inclusion-card excluded">
+              <h3>Not Included</h3>
+              <ul>
+                <li>Personal travel insurance (optional)</li>
+                <li>Visa fees (if applicable)</li>
+                <li>Personal expenses & shopping</li>
+                <li>Tips & gratuities</li>
+                <li>Activities not mentioned in itinerary</li>
+                <li>Alcoholic beverages</li>
+                <li>Airport transfers outside package</li>
+                <li>Travel to/from Jakarta airport</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="final-cta">
+          <h2>Ready to Discover the Land of Smiles?</h2>
+          <p>Limited Availability — Contact Us for Available Dates in 2026</p>
+          <div class="cta-buttons">
+            <a href="https://forms.gle/BT7f2YxepQjhyLC76" target="_blank" class="btn-cta-primary" style="text-decoration: none;">Reserve Your Spot Now</a>
+            <a href="https://www.instagram.com/aventoura_tour" target="_blank" class="btn-cta-secondary" style="text-decoration: none;">Contact Us</a>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <div class="footer-content">
+            <div class="footer-section">
+              <h4>Aventoura</h4>
+              <p>Your trusted adventure travel partner</p>
+            </div>
+            <div class="footer-section">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="#highlights-th">Highlights</a></li>
+                <li><a href="#itinerary-th">Itinerary</a></li>
+              </ul>
+            </div>
+            <div class="footer-section">
+              <h4>Contact</h4>
+              <p>Instagram : aventoura_tour</p>
+              <p>Phone: +62 813-1631-9306</p>
+              <p>Office : Jakarta, Indonesia</p>
+            </div>
+            <div class="footer-section">
+              <h4>Follow Us</h4>
+              <div class="social-links">
+                <a href="https://www.instagram.com/aventoura_tour">Instagram</a>
+              </div>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 Aventoura. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+        // Clear any hash in the URL so the browser doesn't scroll to an anchor on load
+        if (window.location.hash) {
+          history.replaceState(null, '', window.location.pathname);
+        }
+        // Also force scroll to top immediately
+        window.scrollTo(0, 0);
+      </script>
+      <script>
+      function selectDestination(dest) {
+        const picker = document.getElementById('destination-picker');
+        const backBtn = document.getElementById('back-btn');
+
+        picker.classList.add('fade-out');
+
+        setTimeout(() => {
+          picker.style.display = 'none';
+          backBtn.classList.add('visible');
+          window.scrollTo(0, 0);
+
+          if (dest === 'japan') {
+            const japanSite = document.getElementById('japan-site');
+            japanSite.classList.add('visible');
+            initSite('#japan-site');
+          } else if (dest === 'thailand') {
+            const thSite = document.getElementById('thailand-site');
+            thSite.classList.add('visible');
+            initSite('#thailand-site');
+          }
+        }, 750);
+      }
+
+      function goBack() {
+        const picker = document.getElementById('destination-picker');
+        const japanSite = document.getElementById('japan-site');
+        const thSite = document.getElementById('thailand-site');
+        const backBtn = document.getElementById('back-btn');
+
+        japanSite.classList.remove('visible');
+        thSite.classList.remove('visible');
+        backBtn.classList.remove('visible');
+
+        picker.style.display = '';
+        picker.classList.remove('fade-out');
+
+        window.scrollTo(0, 0);
+      }
+
+      function initSite(scope) {
+        const root = document.querySelector(scope);
+
+        // Scroll animations
+        const cards = root.querySelectorAll('.highlight-card, .review-card, .pricing-card, .note-card, .day-main');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = '1';
+              entry.target.style.animation = 'fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 });
+        cards.forEach(card => { card.style.opacity = '0'; observer.observe(card); });
+
+        // Stagger grid items
+        root.querySelectorAll('.highlights-grid, .reviews-grid, .pricing-grid, .notes-grid').forEach(grid => {
+          grid.querySelectorAll('> div').forEach((item, i) => { item.style.animationDelay = `${i * 0.1}s`; });
+        });
+
+        // FAQ accordion
+        root.querySelectorAll('.faq-item').forEach(item => {
+          const q = item.querySelector('.faq-question');
+          if (q) q.addEventListener('click', () => {
+            root.querySelectorAll('.faq-item').forEach(o => { if (o !== item) o.classList.remove('active'); });
+            item.classList.toggle('active');
+          });
+        });
+
+        // Smooth scroll
+        root.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            const target = document.querySelector(href);
+            if (href !== '#' && target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+          });
+        });
+
+        // Navbar shadow
+        const navbar = root.querySelector('.navbar');
+        if (navbar) {
+          window.addEventListener('scroll', () => {
+            navbar.style.boxShadow = window.scrollY > 10 ? '0 4px 16px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.05)';
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
